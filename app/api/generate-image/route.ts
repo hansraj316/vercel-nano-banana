@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { put } from "@vercel/blob"
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,16 +60,22 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Two images are required for editing mode" }, { status: 400 })
       }
 
-      console.log("[v0] API: Converting images to base64")
+      console.log("[v0] API: Uploading images to Vercel Blob")
 
-      // Convert images to base64
-      const image1Buffer = await image1.arrayBuffer()
-      const image2Buffer = await image2.arrayBuffer()
-      const image1Base64 = `data:${image1.type};base64,${Buffer.from(image1Buffer).toString("base64")}`
-      const image2Base64 = `data:${image2.type};base64,${Buffer.from(image2Buffer).toString("base64")}`
+      const [blob1, blob2] = await Promise.all([
+        put(`image1-${Date.now()}.${image1.name.split(".").pop()}`, image1, {
+          access: "public",
+        }),
+        put(`image2-${Date.now()}.${image2.name.split(".").pop()}`, image2, {
+          access: "public",
+        }),
+      ])
 
-      console.log("[v0] API: Image1 base64 length:", image1Base64.length)
-      console.log("[v0] API: Image2 base64 length:", image2Base64.length)
+      const image1Url = blob1.url
+      const image2Url = blob2.url
+
+      console.log("[v0] API: Image1 public URL:", image1Url)
+      console.log("[v0] API: Image2 public URL:", image2Url)
 
       const response = await fetch("https://api.nano-banana.com/v1/edit", {
         method: "POST",
@@ -78,7 +85,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           prompt: prompt,
-          image_urls: [image1Base64, image2Base64],
+          image_urls: [image1Url, image2Url],
         }),
       })
 
