@@ -35,10 +35,18 @@ export async function POST(request: NextRequest) {
       })
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        const errorText = await response.text()
+        console.log("[v0] API: Error response:", errorText)
+        throw new Error(`API request failed: ${response.status} - ${errorText}`)
       }
 
-      result = await response.json()
+      try {
+        result = await response.json()
+      } catch (parseError) {
+        const responseText = await response.text()
+        console.log("[v0] API: Failed to parse JSON, response was:", responseText)
+        throw new Error(`Invalid JSON response from API: ${responseText}`)
+      }
     } else if (mode === "image-editing") {
       console.log("[v0] API: Using image-editing mode")
 
@@ -74,10 +82,18 @@ export async function POST(request: NextRequest) {
       })
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        const errorText = await response.text()
+        console.log("[v0] API: Error response:", errorText)
+        throw new Error(`API request failed: ${response.status} - ${errorText}`)
       }
 
-      result = await response.json()
+      try {
+        result = await response.json()
+      } catch (parseError) {
+        const responseText = await response.text()
+        console.log("[v0] API: Failed to parse JSON, response was:", responseText)
+        throw new Error(`Invalid JSON response from API: ${responseText}`)
+      }
     } else {
       console.log("[v0] API: Invalid mode:", mode)
       return NextResponse.json({ error: "Invalid mode. Must be 'text-to-image' or 'image-editing'" }, { status: 400 })
