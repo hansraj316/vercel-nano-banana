@@ -9,8 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@fal-ai/client": "latest",
-    "@fal-ai/serverless-client": "0.15.0",
     "@hookform/resolvers": "^3.10.0",
     "@paper-design/shaders-react": "latest",
     "@radix-ui/react-accordion": "1.2.2",
