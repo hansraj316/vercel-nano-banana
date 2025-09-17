@@ -34,16 +34,17 @@ export async function POST(request: NextRequest) {
         }),
       })
 
+      const responseText = await response.text()
+      console.log("[v0] API: Raw response:", responseText)
+
       if (!response.ok) {
-        const errorText = await response.text()
-        console.log("[v0] API: Error response:", errorText)
-        throw new Error(`API request failed: ${response.status} - ${errorText}`)
+        console.log("[v0] API: Error response:", responseText)
+        throw new Error(`API request failed: ${response.status} - ${responseText}`)
       }
 
       try {
-        result = await response.json()
+        result = JSON.parse(responseText)
       } catch (parseError) {
-        const responseText = await response.text()
         console.log("[v0] API: Failed to parse JSON, response was:", responseText)
         throw new Error(`Invalid JSON response from API: ${responseText}`)
       }
@@ -81,16 +82,17 @@ export async function POST(request: NextRequest) {
         }),
       })
 
+      const responseText = await response.text()
+      console.log("[v0] API: Raw response:", responseText)
+
       if (!response.ok) {
-        const errorText = await response.text()
-        console.log("[v0] API: Error response:", errorText)
-        throw new Error(`API request failed: ${response.status} - ${errorText}`)
+        console.log("[v0] API: Error response:", responseText)
+        throw new Error(`API request failed: ${response.status} - ${responseText}`)
       }
 
       try {
-        result = await response.json()
+        result = JSON.parse(responseText)
       } catch (parseError) {
-        const responseText = await response.text()
         console.log("[v0] API: Failed to parse JSON, response was:", responseText)
         throw new Error(`Invalid JSON response from API: ${responseText}`)
       }
