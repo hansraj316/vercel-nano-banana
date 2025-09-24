@@ -127,8 +127,8 @@ export function ImageCombiner() {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [prompt, setPrompt] = useState(
     mode === "text-to-image"
-      ? "A beautiful landscape with mountains and a lake at sunset"
-      : "Edit these images to create a cohesive artistic composition",
+      ? "A cyberpunk cityscape with neon lights reflecting on wet streets at midnight"
+      : "Blend these images into a surreal artistic masterpiece with vibrant colors and dreamlike elements",
   )
 
   const getRandomPrompt = () => {
@@ -189,8 +189,8 @@ export function ImageCombiner() {
     setMode(newMode)
     setPrompt(
       newMode === "text-to-image"
-        ? "A beautiful landscape with mountains and a lake at sunset"
-        : "Edit these images to create a cohesive artistic composition",
+        ? "A cyberpunk cityscape with neon lights reflecting on wet streets at midnight"
+        : "Blend these images into a surreal artistic masterpiece with vibrant colors and dreamlike elements",
     )
     setGeneratedImage(null)
     if (newMode === "text-to-image") {
