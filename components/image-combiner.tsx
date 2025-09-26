@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Upload, Download, Sparkles, ImageIcon, Edit, Zap, Shuffle } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -480,11 +481,16 @@ export function ImageCombiner() {
                             >
                               {image1Preview ? (
                                 <div className="w-full h-full p-2">
-                                  <img
-                                    src={image1Preview || "/placeholder.svg"}
-                                    alt="Image 1"
-                                    className="w-full h-full object-contain rounded"
-                                  />
+                                  <div className="relative w-full h-full">
+                                    <Image
+                                      src={image1Preview || "/placeholder.svg"}
+                                      alt="Image 1"
+                                      fill
+                                      unoptimized
+                                      className="object-contain rounded"
+                                      sizes="140px"
+                                    />
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="text-center text-gray-300 py-6">
@@ -517,11 +523,16 @@ export function ImageCombiner() {
                             >
                               {image2Preview ? (
                                 <div className="w-full h-full p-2">
-                                  <img
-                                    src={image2Preview || "/placeholder.svg"}
-                                    alt="Image 2"
-                                    className="w-full h-full object-contain rounded"
-                                  />
+                                  <div className="relative w-full h-full">
+                                    <Image
+                                      src={image2Preview || "/placeholder.svg"}
+                                      alt="Image 2"
+                                      fill
+                                      unoptimized
+                                      className="object-contain rounded"
+                                      sizes="140px"
+                                    />
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="text-center text-gray-300 py-6">
@@ -635,17 +646,22 @@ export function ImageCombiner() {
                   ) : generatedImage ? (
                     <div className="w-full h-full flex flex-col">
                       <div className="flex-1 flex items-center justify-center max-h-64">
-                        <img
-                          src={generatedImage.url || "/placeholder.svg"}
-                          alt="Generated"
-                          className={`max-w-full max-h-full object-contain rounded transition-opacity duration-500 ${
-                            imageLoaded ? "opacity-100" : "opacity-0"
-                          }`}
-                          style={{
-                            transform: imageLoaded ? "scale(1)" : "scale(1.05)",
-                            transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
-                          }}
-                        />
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={generatedImage.url || "/placeholder.svg"}
+                            alt="Generated"
+                            fill
+                            unoptimized
+                            className={`object-contain rounded transition-opacity duration-500 ${
+                              imageLoaded ? "opacity-100" : "opacity-0"
+                            }`}
+                            sizes="(max-width: 768px) 100vw, 512px"
+                            style={{
+                              transform: imageLoaded ? "scale(1)" : "scale(1.05)",
+                              transition: "opacity 0.5s ease-out, transform 0.5s ease-out",
+                            }}
+                          />
+                        </div>
                       </div>
                       <div className="mt-4 p-3 bg-black/50 border border-gray-600 rounded">
                         <p className="text-sm text-gray-300">
