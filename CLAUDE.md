@@ -19,7 +19,7 @@ This is a Next.js 14 application built with v0 that integrates with the Nano Ban
 - **Main Application**: Single-page image generation/editing interface at `app/page.tsx`
 - **API Integration**: `/api/generate-image/route.ts` handles both text-to-image and image-to-image workflows
 - **UI Framework**: Built with shadcn/ui components and Radix UI primitives
-- **Styling**: Tailwind CSS with custom design system
+
 
 ### Key Components
 
