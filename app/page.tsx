@@ -1,4 +1,4 @@
-import { ImageCombiner } from "@/components/image-combiner"
+import { ImageCombiner } from "../components/image-combiner"
 
 export default function Home() {
   return (

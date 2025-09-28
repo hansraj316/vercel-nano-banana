@@ -1,143 +1,153 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { put } from "@vercel/blob"
 
-export async function POST(request: NextRequest) {
+interface NanoBananaResponse {
+  images: Array<{
+    url: string
+  }>
+  description?: string
+}
+
+interface GenerateImageResponse {
+  url: string
+  prompt: string
+  description?: string
+}
+
+const NANO_BANANA_BASE_URL = "https://api.nano-banana.com/v1"
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+
+async function validateImageFile(file: File): Promise<void> {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error(`Unsupported file type: ${file.type}. Allowed types: ${ALLOWED_IMAGE_TYPES.join(', ')}`)
+  }
+  
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`File too large: ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maximum size: ${MAX_FILE_SIZE / (1024 * 1024)}MB`)
+  }
+}
+
+async function makeNanoBananaRequest(url: string, body: any): Promise<NanoBananaResponse> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.NANO_BANANA_API_KEY || "demo-key"}`,
+    },
+    body: JSON.stringify(body),
+  })
+
+  const responseText = await response.text()
+  console.log("[API] Nano Banana response:", responseText)
+
+  if (!response.ok) {
+    throw new Error(`Nano Banana API request failed: ${response.status} - ${responseText}`)
+  }
+
   try {
-    console.log("[v0] API: Starting image generation request")
+    return JSON.parse(responseText) as NanoBananaResponse
+  } catch (parseError) {
+    throw new Error(`Invalid JSON response from Nano Banana API: ${responseText}`)
+  }
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse<GenerateImageResponse | { error: string; details?: string }>> {
+  try {
+    console.log("[API] Starting image generation request")
 
     const formData = await request.formData()
     const mode = formData.get("mode") as string
     const prompt = formData.get("prompt") as string
 
-    console.log("[v0] API: Mode:", mode)
-    console.log("[v0] API: Prompt:", prompt)
+    console.log("[API] Mode:", mode)
+    console.log("[API] Prompt:", prompt)
 
-    if (!mode || !prompt) {
-      console.log("[v0] API: Missing required fields")
+    if (!mode || !prompt?.trim()) {
       return NextResponse.json({ error: "Mode and prompt are required" }, { status: 400 })
     }
 
-    let result: any
+    if (prompt.trim().length > 1000) {
+      return NextResponse.json({ error: "Prompt too long. Maximum length: 1000 characters" }, { status: 400 })
+    }
+
+    let result: NanoBananaResponse
 
     if (mode === "text-to-image") {
-      console.log("[v0] API: Using text-to-image mode")
+      console.log("[API] Processing text-to-image request")
 
-      const response = await fetch("https://api.nano-banana.com/v1/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NANO_BANANA_API_KEY || "demo-key"}`,
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          num_images: 1,
-          output_format: "jpeg",
-        }),
+      result = await makeNanoBananaRequest(`${NANO_BANANA_BASE_URL}/generate`, {
+        prompt: prompt.trim(),
+        num_images: 1,
+        output_format: "jpeg",
       })
-
-      const responseText = await response.text()
-      console.log("[v0] API: Raw response:", responseText)
-
-      if (!response.ok) {
-        console.log("[v0] API: Error response:", responseText)
-        throw new Error(`API request failed: ${response.status} - ${responseText}`)
-      }
-
-      try {
-        result = JSON.parse(responseText)
-      } catch (parseError) {
-        console.log("[v0] API: Failed to parse JSON, response was:", responseText)
-        throw new Error(`Invalid JSON response from API: ${responseText}`)
-      }
     } else if (mode === "image-editing") {
-      console.log("[v0] API: Using image-editing mode")
+      console.log("[API] Processing image-editing request")
 
       const image1 = formData.get("image1") as File
       const image2 = formData.get("image2") as File
 
       if (!image1 || !image2) {
-        console.log("[v0] API: Missing images for editing mode")
         return NextResponse.json({ error: "Two images are required for editing mode" }, { status: 400 })
       }
 
-      console.log("[v0] API: Uploading images to Vercel Blob")
+      // Validate both images
+      try {
+        await validateImageFile(image1)
+        await validateImageFile(image2)
+      } catch (validationError) {
+        return NextResponse.json({ 
+          error: "Image validation failed", 
+          details: validationError instanceof Error ? validationError.message : "Invalid image file"
+        }, { status: 400 })
+      }
 
+      console.log("[API] Uploading images to Vercel Blob")
+
+      const timestamp = Date.now()
       const [blob1, blob2] = await Promise.all([
-        put(`image1-${Date.now()}.${image1.name.split(".").pop()}`, image1, {
+        put(`image1-${timestamp}.${image1.name.split(".").pop()}`, image1, {
           access: "public",
         }),
-        put(`image2-${Date.now()}.${image2.name.split(".").pop()}`, image2, {
+        put(`image2-${timestamp}.${image2.name.split(".").pop()}`, image2, {
           access: "public",
         }),
       ])
 
-      const image1Url = blob1.url
-      const image2Url = blob2.url
+      console.log("[API] Images uploaded successfully")
 
-      console.log("[v0] API: Image1 public URL:", image1Url)
-      console.log("[v0] API: Image2 public URL:", image2Url)
-
-      const response = await fetch("https://api.nano-banana.com/v1/edit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NANO_BANANA_API_KEY || "demo-key"}`,
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          image_urls: [image1Url, image2Url],
-        }),
+      result = await makeNanoBananaRequest(`${NANO_BANANA_BASE_URL}/edit`, {
+        prompt: prompt.trim(),
+        image_urls: [blob1.url, blob2.url],
       })
-
-      const responseText = await response.text()
-      console.log("[v0] API: Raw response:", responseText)
-
-      if (!response.ok) {
-        console.log("[v0] API: Error response:", responseText)
-        throw new Error(`API request failed: ${response.status} - ${responseText}`)
-      }
-
-      try {
-        result = JSON.parse(responseText)
-      } catch (parseError) {
-        console.log("[v0] API: Failed to parse JSON, response was:", responseText)
-        throw new Error(`Invalid JSON response from API: ${responseText}`)
-      }
     } else {
-      console.log("[v0] API: Invalid mode:", mode)
       return NextResponse.json({ error: "Invalid mode. Must be 'text-to-image' or 'image-editing'" }, { status: 400 })
     }
 
-    console.log("[v0] API: Nano-banana response received")
-    console.log("[v0] API: Result data:", JSON.stringify(result, null, 2))
-
-    if (!result || !result.images || result.images.length === 0) {
-      console.log("[v0] API: No images in response")
-      throw new Error("No images generated")
+    if (!result?.images?.length) {
+      throw new Error("No images generated by Nano Banana API")
     }
 
     const imageUrl = result.images[0].url
     const description = result.description || ""
 
-    console.log("[v0] API: Generated image URL:", imageUrl)
-    console.log("[v0] API: AI Description:", description)
+    console.log("[API] Generated image URL:", imageUrl)
+    console.log("[API] AI Description:", description)
 
     return NextResponse.json({
       url: imageUrl,
-      prompt: prompt,
-      description: description,
+      prompt: prompt.trim(),
+      description,
     })
   } catch (error) {
-    console.error("[v0] API: Error generating image:", error)
-    console.error("[v0] API: Error details:", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    })
+    console.error("[API] Error generating image:", error)
 
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+    
     return NextResponse.json(
       {
         error: "Failed to generate image",
-        details: error instanceof Error ? error.message : "Unknown error occurred",
+        details: errorMessage,
       },
       { status: 500 },
     )

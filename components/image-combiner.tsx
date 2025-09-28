@@ -3,9 +3,9 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
+import { Button } from "./ui/button"
 import { Upload, Download, Sparkles, ImageIcon, Edit, Zap, Shuffle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "../lib/utils"
 import { Dithering } from "@paper-design/shaders-react"
 
 type Mode = "text-to-image" | "image-editing"
