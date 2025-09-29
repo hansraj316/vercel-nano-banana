@@ -58,14 +58,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateI
 
     const formData = await request.formData()
     const mode = formData.get("mode") as string
-   const promptValue = formData.get("prompt")
-   if (typeof promptValue !== "string") {
-    console.log("[API] Mode:", mode)
+    const promptValue = formData.get("prompt")
+    if (typeof promptValue !== "string") {
+      return NextResponse.json({ error: "Prompt must be a string" }, { status: 400 })
+    }
+    const prompt = promptValue
 
     console.log("[API] Mode:", mode)
     console.log("[API] Prompt:", prompt)
 
-   if (!mode || !prompt) {
+    if (!mode || !prompt) {
       return NextResponse.json({ error: "Mode and prompt are required" }, { status: 400 })
     }
 
