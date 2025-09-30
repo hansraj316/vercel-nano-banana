@@ -207,7 +207,7 @@ export function ImageCombiner() {
 
   const preloadImage = (url: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const img = new Image()
+      const img = document.createElement('img')
       img.onload = () => resolve()
       img.onerror = reject
       img.src = url
