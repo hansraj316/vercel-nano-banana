@@ -10,7 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Start**: `pnpm start` - Start production server
 
 ## Project Architecture
-
+ 
+ 
 This is a Next.js 14 application built with v0 that integrates with the Nano Banana API for AI-powered image generation and editing.
 
 ### Core Structure
